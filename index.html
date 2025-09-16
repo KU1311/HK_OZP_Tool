@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to MapKing OZP Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        header {
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .logo span {
+            color: #3498db;
+        }
+        
+        .tagline {
+            color: #7f8c8d;
+            font-size: 1.2rem;
+        }
+        
+        main {
+            width: 100%;
+            max-width: 1000px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 40px;
+        }
+        
+        .hero {
+            background: linear-gradient(to right, #3498db, #2c3e50);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .features {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .feature {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+        
+        .feature h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .feature p {
+            color: #7f8c8d;
+            line-height: 1.5;
+        }
+        
+        .cta {
+            background: #f8f9fa;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        footer {
+            width: 100%;
+            max-width: 1200px;
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Map<span>King</span></div>
+        <div class="tagline">Advanced OZP Mapping Solutions</div>
+    </header>
+    
+    <main>
+        <section class="hero">
+            <h1>Welcome to MapKing OZP Tool</h1>
+            <p>A powerful mapping solution designed for urban planners, developers, and environmental consultants to visualize and analyze zoning data with precision.</p>
+        </section>
+        
+        <section class="features">
+            <div class="feature">
+                <div class="feature-icon">🗺️</div>
+                <h3>Interactive Maps</h3>
+                <p>Explore zoning data with our intuitive interactive mapping interface designed for professionals.</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📊</div>
+                <h3>Data Analysis</h3>
+                <p>Perform detailed analysis with overlays, measurements, and custom data visualization tools.</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">💾</div>
+                <h3>Export Reports</h3>
+                <p>Generate comprehensive reports and export data in multiple formats for your projects.</p>
+            </div>
+        </section>
+        
+        <section class="cta">
+            <a href="#" class="btn">Get Started with MapKing</a>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 MapKing OZP Tool. All rights reserved.</p>
+    </footer>
+</body>
+</html>
