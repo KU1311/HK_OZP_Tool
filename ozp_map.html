@@ -171,13 +171,13 @@
                 ]
             });
 
-            const map = new Map({
-                basemap: basemap,
-            });
-
             // Create graphics layer for GeoJSON polygons
             const geojsonPolygonsLayer = new GraphicsLayer();
-            map.add(geojsonPolygonsLayer);
+            
+            const map = new Map({
+                basemap: basemap,
+                layers: [geojsonPolygonsLayer] // Add the graphics layer to the map
+            });
 
             const mView = new MapView({
                 container: "map-area",
