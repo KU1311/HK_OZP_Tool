@@ -184,8 +184,9 @@
                 center: new Point(114.170515, 22.304, new SpatialReference({ wkid: 4326 })),
             });
 
-            // Load GeoJSON polygons and add them to the map AFTER the view is ready
+            // This is the core change: Fetch and process GeoJSON data *only after* the MapView is loaded.
             mView.when(() => {
+                // Add label layer here, as the view is now ready.
                 map.add(new VectorTileLayer(mapLabelVTUrl));
 
                 const geojsonUrl = 'https://raw.githubusercontent.com/KU1311/HK_OZP_Tool/main/S_K1_29_merged.geojson';
@@ -275,6 +276,9 @@
                             // Add the graphic to the GeoJSON polygons layer
                             geojsonPolygonsLayer.add(graphic);
                         });
+
+                        // Now that all graphics are loaded, use goTo to zoom to their extent
+                        mView.goTo(geojsonPolygonsLayer.graphics);
                     })
                     .catch(error => {
                         console.error('Error loading GeoJSON:', error);
