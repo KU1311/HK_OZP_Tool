@@ -186,6 +186,26 @@
                 center: new Point(114.170515, 22.304, new SpatialReference({ wkid: 4326 })),
             });
 
+            // Function to simulate a click on the map
+            function simulateMapClick() {
+                // Get the center of the map view
+                const center = mView.center;
+                
+                // Create a mock event object with the center coordinates
+                const mockEvent = {
+                    mapPoint: center,
+                    x: mView.width / 2,
+                    y: mView.height / 2,
+                    stopPropagation: function() {},
+                    preventDefault: function() {}
+                };
+                
+                // Simulate a click event
+                mView.emit("click", mockEvent);
+                
+                console.log("Simulated map click to trigger polygon rendering");
+            }
+
             // Load and display GeoJSON polygons from the provided URL
             const geojsonUrl = 'https://raw.githubusercontent.com/KU1311/HK_OZP_Tool/main/S_K1_29_merged.geojson';
             
@@ -279,6 +299,9 @@
                     document.getElementById('geojson-polygons-toggle').addEventListener('change', function(e) {
                         geojsonPolygonsLayer.visible = e.target.checked;
                     });
+                    
+                    // Simulate a click after a short delay to ensure the view is ready
+                    setTimeout(simulateMapClick, 1000);
                 })
                 .catch(error => {
                     console.error('Error loading GeoJSON:', error);
@@ -288,6 +311,9 @@
             // Add label layer after map view is created
             mView.when(() => {
                 map.add(new VectorTileLayer(mapLabelVTUrl));
+                
+                // Also simulate a click when the view is ready
+                setTimeout(simulateMapClick, 1500);
             });
         });
     </script>
