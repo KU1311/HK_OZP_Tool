@@ -186,24 +186,16 @@
                 center: new Point(114.170515, 22.304, new SpatialReference({ wkid: 4326 })),
             });
 
-            // Function to simulate a click on the map
-            function simulateMapClick() {
-                // Get the center of the map view
-                const center = mView.center;
+            // Function to force graphics layer refresh
+            function refreshGraphicsLayer() {
+                // Temporarily toggle visibility to force a redraw
+                const wasVisible = geojsonPolygonsLayer.visible;
+                geojsonPolygonsLayer.visible = false;
                 
-                // Create a mock event object with the center coordinates
-                const mockEvent = {
-                    mapPoint: center,
-                    x: mView.width / 2,
-                    y: mView.height / 2,
-                    stopPropagation: function() {},
-                    preventDefault: function() {}
-                };
-                
-                // Simulate a click event
-                mView.emit("click", mockEvent);
-                
-                console.log("Simulated map click to trigger polygon rendering");
+                setTimeout(() => {
+                    geojsonPolygonsLayer.visible = wasVisible;
+                    console.log("Forced graphics layer refresh");
+                }, 100);
             }
 
             // Load and display GeoJSON polygons from the provided URL
@@ -298,38 +290,28 @@
                     // Set up layer toggle
                     document.getElementById('geojson-polygons-toggle').addEventListener('change', function(e) {
                         geojsonPolygonsLayer.visible = e.target.checked;
+                        // Refresh after toggle to ensure proper rendering
+                        setTimeout(refreshGraphicsLayer, 50);
                     });
                     
-                    // Simulate a click after a short delay to ensure the view is ready
-                    setTimeout(simulateMapClick, 1000);
+                    // Force refresh after loading all graphics
+                    setTimeout(refreshGraphicsLayer, 500);
                 })
                 .catch(error => {
                     console.error('Error loading GeoJSON:', error);
                     document.getElementById('loading-indicator').innerHTML = 'Error loading GeoJSON data';
                 });
 
-            <script>
-                // Alternative approach: Force graphics layer refresh
-                function refreshGraphicsLayer() {
-                    // Temporarily toggle visibility to force a redraw
-                    geojsonPolygonsLayer.visible = false;
-                    setTimeout(() => {
-                        geojsonPolygonsLayer.visible = true;
-                        console.log("Forced graphics layer refresh");
-                    }, 100);
-                }
-                
-                // Call this function after adding all graphics
-                setTimeout(refreshGraphicsLayer, 1000);
-                </script>
-            
             // Add label layer after map view is created
             mView.when(() => {
                 map.add(new VectorTileLayer(mapLabelVTUrl));
                 
-                // Also simulate a click when the view is ready
-                setTimeout(simulateMapClick, 1500);
+                // Force refresh when view is ready
+                setTimeout(refreshGraphicsLayer, 1000);
             });
+            
+            // Additional refresh after a longer delay to catch any late rendering issues
+            setTimeout(refreshGraphicsLayer, 2000);
         });
     </script>
 </body>
