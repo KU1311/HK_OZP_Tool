@@ -157,6 +157,8 @@
             "esri/Color"
         ], function (Map, Basemap, VectorTileLayer, MapView, SpatialReference, Point, Graphic, GraphicsLayer,
             SimpleFillSymbol, SimpleLineSymbol, Color) {
+
+            // Your existing configuration
             const basemapVTURL = "https://mapapi.geodata.gov.hk/gs/api/v1.0.0/vt/basemap/HK80";
             const mapLabelVTUrl = "https://mapapi.geodata.gov.hk/gs/api/v1.0.0/vt/label/hk/en/HK80";
 
@@ -182,118 +184,124 @@
                 zoom: 14,
                 center: new Point(114.170515, 22.304, new SpatialReference({ wkid: 4326 })),
             });
-
-            // Wait for the MapView to be ready before proceeding
+            
+            // Wait for the view to be ready, then trigger the delayed load
             mView.when(() => {
-                console.log("MapView is ready. Starting GeoJSON load...");
+                console.log("MapView is ready. Delaying GeoJSON load for 5 seconds...");
+                
+                // Add label layer immediately
                 map.add(new VectorTileLayer(mapLabelVTUrl));
 
-                const geojsonUrl = 'https://raw.githubusercontent.com/KU1311/HK_OZP_Tool/main/S_K1_29_merged.geojson';
+                // Set a timeout to delay the GeoJSON fetching and rendering
+                setTimeout(() => {
+                    console.log("5-second delay elapsed. Loading GeoJSON data...");
+                    const geojsonUrl = 'https://raw.githubusercontent.com/KU1311/HK_OZP_Tool/main/S_K1_29_merged.geojson';
 
-                fetch(geojsonUrl)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(geojsonData => {
-                        console.log("GeoJSON data loaded successfully.");
-                        document.getElementById('loading-indicator').style.display = 'none';
+                    fetch(geojsonUrl)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(geojsonData => {
+                            console.log("GeoJSON data loaded successfully.");
+                            document.getElementById('loading-indicator').style.display = 'none';
 
-                        if (!geojsonData.features || geojsonData.features.length === 0) {
-                            console.warn("GeoJSON file contains no features or is empty.");
-                            return;
-                        }
-
-                        const graphics = geojsonData.features.map(feature => {
-                            const polygon = {
-                                type: "polygon",
-                                rings: feature.geometry.coordinates[0].map(coord => [coord[0], coord[1]]),
-                                spatialReference: { wkid: 4326 }
-                            };
-
-                            let fillColor;
-                            switch (feature.properties.ZONE_LABEL) {
-                                case "C":
-                                    fillColor = new Color([255, 0, 0, 0.5]);
-                                    break;
-                                case "G/IC":
-                                    fillColor = new Color([0, 255, 0, 0.5]);
-                                    break;
-                                case "MRDJ":
-                                    fillColor = new Color([128, 0, 128, 0.5]);
-                                    break;
-                                case "O":
-                                    fillColor = new Color([255, 165, 0, 0.5]);
-                                    break;
-                                case "OU":
-                                    fillColor = new Color([255, 215, 0, 0.5]);
-                                    break;
-                                case "R(A)":
-                                    fillColor = new Color([0, 0, 255, 0.5]);
-                                    break;
-                                case "R(B)":
-                                    fillColor = new Color([0, 191, 255, 0.5]);
-                                    break;
-                                default:
-                                    fillColor = new Color([128, 128, 128, 0.5]);
+                            if (!geojsonData.features || geojsonData.features.length === 0) {
+                                console.warn("GeoJSON file contains no features or is empty.");
+                                return;
                             }
 
-                            const symbol = new SimpleFillSymbol({
-                                color: fillColor,
-                                outline: new SimpleLineSymbol({
-                                    color: new Color([0, 0, 0, 0.7]),
-                                    width: 1
-                                })
-                            });
-
-                            const attributes = {
-                                ZONE_LABEL: feature.properties.ZONE_LABEL,
-                                DESC_ENG: feature.properties.DESC_ENG,
-                                PLAN_NO: feature.properties.PLAN_NO,
-                                SPUSE_ENG: feature.properties.SPUSE_ENG,
-                                Shape_Area: feature.properties.Shape_Area,
-                                BHC_TYPE: feature.properties.BHC_TYPE,
-                                BHC_VALUE: feature.properties.BHC_VALUE
-                            };
-
-                            return new Graphic({
-                                geometry: polygon,
-                                symbol: symbol,
-                                attributes: attributes,
-                                popupTemplate: {
-                                    title: "{ZONE_LABEL} - {DESC_ENG}",
-                                    content: `
-                                        <b>Plan No:</b> {PLAN_NO}<br>
-                                        <b>Zone Label:</b> {ZONE_LABEL}<br>
-                                        <b>Description:</b> {DESC_ENG}<br>
-                                        <b>Special Use:</b> {SPUSE_ENG}<br>
-                                        <b>Area:</b> {Shape_Area} sq units<br>
-                                        <b>BHC Type:</b> {BHC_TYPE}<br>
-                                        <b>BHC Value:</b> {BHC_VALUE}
-                                    `
+                            const graphics = geojsonData.features.map(feature => {
+                                const polygon = {
+                                    type: "polygon",
+                                    rings: feature.geometry.coordinates[0].map(coord => [coord[0], coord[1]]),
+                                    spatialReference: { wkid: 4326 }
+                                };
+                                
+                                let fillColor;
+                                switch (feature.properties.ZONE_LABEL) {
+                                    case "C":
+                                        fillColor = new Color([255, 0, 0, 0.5]);
+                                        break;
+                                    case "G/IC":
+                                        fillColor = new Color([0, 255, 0, 0.5]);
+                                        break;
+                                    case "MRDJ":
+                                        fillColor = new Color([128, 0, 128, 0.5]);
+                                        break;
+                                    case "O":
+                                        fillColor = new Color([255, 165, 0, 0.5]);
+                                        break;
+                                    case "OU":
+                                        fillColor = new Color([255, 215, 0, 0.5]);
+                                        break;
+                                    case "R(A)":
+                                        fillColor = new Color([0, 0, 255, 0.5]);
+                                        break;
+                                    case "R(B)":
+                                        fillColor = new Color([0, 191, 255, 0.5]);
+                                        break;
+                                    default:
+                                        fillColor = new Color([128, 128, 128, 0.5]);
                                 }
+
+                                const symbol = new SimpleFillSymbol({
+                                    color: fillColor,
+                                    outline: new SimpleLineSymbol({
+                                        color: new Color([0, 0, 0, 0.7]),
+                                        width: 1
+                                    })
+                                });
+
+                                const attributes = {
+                                    ZONE_LABEL: feature.properties.ZONE_LABEL,
+                                    DESC_ENG: feature.properties.DESC_ENG,
+                                    PLAN_NO: feature.properties.PLAN_NO,
+                                    SPUSE_ENG: feature.properties.SPUSE_ENG,
+                                    Shape_Area: feature.properties.Shape_Area,
+                                    BHC_TYPE: feature.properties.BHC_TYPE,
+                                    BHC_VALUE: feature.properties.BHC_VALUE
+                                };
+
+                                return new Graphic({
+                                    geometry: polygon,
+                                    symbol: symbol,
+                                    attributes: attributes,
+                                    popupTemplate: {
+                                        title: "{ZONE_LABEL} - {DESC_ENG}",
+                                        content: `
+                                            <b>Plan No:</b> {PLAN_NO}<br>
+                                            <b>Zone Label:</b> {ZONE_LABEL}<br>
+                                            <b>Description:</b> {DESC_ENG}<br>
+                                            <b>Special Use:</b> {SPUSE_ENG}<br>
+                                            <b>Area:</b> {Shape_Area} sq units<br>
+                                            <b>BHC Type:</b> {BHC_TYPE}<br>
+                                            <b>BHC Value:</b> {BHC_VALUE}
+                                        `
+                                    }
+                                });
                             });
+                            
+                            const validGraphics = graphics.filter(g => g !== undefined);
+                            geojsonPolygonsLayer.addMany(validGraphics);
+                            console.log(`${validGraphics.length} graphics added to the layer.`);
+
+                            if (validGraphics.length > 0) {
+                                mView.goTo(validGraphics).then(() => {
+                                    console.log("Map zoomed to the extent of the polygons.");
+                                }).catch(err => {
+                                     console.error("Error zooming to extent:", err);
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading GeoJSON:', error);
+                            document.getElementById('loading-indicator').innerHTML = 'Error loading GeoJSON data';
                         });
-                        
-                        // Add all graphics at once for better performance
-                        geojsonPolygonsLayer.addMany(graphics);
-                        console.log(`${graphics.length} graphics added to the layer.`);
-
-                        // Zoom to the extent of the added graphics
-                        mView.goTo(geojsonPolygonsLayer.graphics).then(() => {
-                            console.log("Map zoomed to the extent of the polygons.");
-                        }).catch(err => {
-                             console.error("Error zooming to extent:", err);
-                        });
-
-                    })
-                    .catch(error => {
-                        console.error('Error loading GeoJSON:', error);
-                        document.getElementById('loading-indicator').innerHTML = 'Error loading GeoJSON data';
-                    });
-
+                }, 5000); // 5-second delay
+                
                 document.getElementById('geojson-polygons-toggle').addEventListener('change', function (e) {
                     geojsonPolygonsLayer.visible = e.target.checked;
                 });
