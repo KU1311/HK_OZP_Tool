@@ -63,6 +63,7 @@
             max-width: 250px;
             max-height: 70%;
             overflow-y: auto;
+            z-index: 50;
         }
         
         .layer-item {
@@ -174,16 +175,16 @@
                 basemap: basemap,
             });
 
+            // Create graphics layer for GeoJSON polygons
+            const geojsonPolygonsLayer = new GraphicsLayer();
+            map.add(geojsonPolygonsLayer);
+
             const mView = new MapView({
                 container: "map-area",
                 map: map,
                 zoom: 14,
                 center: new Point(114.170515, 22.304, new SpatialReference({ wkid: 4326 })),
             });
-            
-            // Create graphics layer for GeoJSON polygons
-            const geojsonPolygonsLayer = new GraphicsLayer();
-            map.add(geojsonPolygonsLayer);
 
             // Load and display GeoJSON polygons from the provided URL
             const geojsonUrl = 'https://raw.githubusercontent.com/KU1311/HK_OZP_Tool/main/S_K1_29_merged.geojson';
@@ -284,7 +285,10 @@
                     document.getElementById('loading-indicator').innerHTML = 'Error loading GeoJSON data';
                 });
 
-            map.add(new VectorTileLayer(mapLabelVTUrl));
+            // Add label layer after map view is created
+            mView.when(() => {
+                map.add(new VectorTileLayer(mapLabelVTUrl));
+            });
         });
     </script>
 </body>
