@@ -169,12 +169,11 @@
                 ]
             });
 
-            // Create graphics layer for GeoJSON polygons
             const geojsonPolygonsLayer = new GraphicsLayer();
 
             const map = new Map({
                 basemap: basemap,
-                layers: [geojsonPolygonsLayer] // Add the graphics layer to the map
+                layers: [geojsonPolygonsLayer]
             });
 
             const mView = new MapView({
@@ -184,57 +183,63 @@
                 center: new Point(114.170515, 22.304, new SpatialReference({ wkid: 4326 })),
             });
 
-            // This is the core change: Fetch and process GeoJSON data *only after* the MapView is loaded.
+            // Wait for the MapView to be ready before proceeding
             mView.when(() => {
-                // Add label layer here, as the view is now ready.
+                console.log("MapView is ready. Starting GeoJSON load...");
                 map.add(new VectorTileLayer(mapLabelVTUrl));
 
                 const geojsonUrl = 'https://raw.githubusercontent.com/KU1311/HK_OZP_Tool/main/S_K1_29_merged.geojson';
 
                 fetch(geojsonUrl)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(geojsonData => {
-                        // Hide loading indicator
+                        console.log("GeoJSON data loaded successfully.");
                         document.getElementById('loading-indicator').style.display = 'none';
 
-                        // Process each feature in the GeoJSON
-                        geojsonData.features.forEach(feature => {
-                            // Create polygon from coordinates
+                        if (!geojsonData.features || geojsonData.features.length === 0) {
+                            console.warn("GeoJSON file contains no features or is empty.");
+                            return;
+                        }
+
+                        const graphics = geojsonData.features.map(feature => {
                             const polygon = {
                                 type: "polygon",
                                 rings: feature.geometry.coordinates[0].map(coord => [coord[0], coord[1]]),
                                 spatialReference: { wkid: 4326 }
                             };
 
-                            // Determine color based on zone type
                             let fillColor;
                             switch (feature.properties.ZONE_LABEL) {
                                 case "C":
-                                    fillColor = new Color([255, 0, 0, 0.5]); // Red
+                                    fillColor = new Color([255, 0, 0, 0.5]);
                                     break;
                                 case "G/IC":
-                                    fillColor = new Color([0, 255, 0, 0.5]); // Green
+                                    fillColor = new Color([0, 255, 0, 0.5]);
                                     break;
                                 case "MRDJ":
-                                    fillColor = new Color([128, 0, 128, 0.5]); // Purple
+                                    fillColor = new Color([128, 0, 128, 0.5]);
                                     break;
                                 case "O":
-                                    fillColor = new Color([255, 165, 0, 0.5]); // Orange
+                                    fillColor = new Color([255, 165, 0, 0.5]);
                                     break;
                                 case "OU":
-                                    fillColor = new Color([255, 215, 0, 0.5]); // Gold
+                                    fillColor = new Color([255, 215, 0, 0.5]);
                                     break;
                                 case "R(A)":
-                                    fillColor = new Color([0, 0, 255, 0.5]); // Blue
+                                    fillColor = new Color([0, 0, 255, 0.5]);
                                     break;
                                 case "R(B)":
-                                    fillColor = new Color([0, 191, 255, 0.5]); // Deep Sky Blue
+                                    fillColor = new Color([0, 191, 255, 0.5]);
                                     break;
                                 default:
-                                    fillColor = new Color([128, 128, 128, 0.5]); // Gray
+                                    fillColor = new Color([128, 128, 128, 0.5]);
                             }
 
-                            // Create symbol for the polygon
                             const symbol = new SimpleFillSymbol({
                                 color: fillColor,
                                 outline: new SimpleLineSymbol({
@@ -243,7 +248,6 @@
                                 })
                             });
 
-                            // Create attributes without functions to avoid serialization issues
                             const attributes = {
                                 ZONE_LABEL: feature.properties.ZONE_LABEL,
                                 DESC_ENG: feature.properties.DESC_ENG,
@@ -254,8 +258,7 @@
                                 BHC_VALUE: feature.properties.BHC_VALUE
                             };
 
-                            // Create graphic for the polygon
-                            const graphic = new Graphic({
+                            return new Graphic({
                                 geometry: polygon,
                                 symbol: symbol,
                                 attributes: attributes,
@@ -272,20 +275,25 @@
                                     `
                                 }
                             });
+                        });
+                        
+                        // Add all graphics at once for better performance
+                        geojsonPolygonsLayer.addMany(graphics);
+                        console.log(`${graphics.length} graphics added to the layer.`);
 
-                            // Add the graphic to the GeoJSON polygons layer
-                            geojsonPolygonsLayer.add(graphic);
+                        // Zoom to the extent of the added graphics
+                        mView.goTo(geojsonPolygonsLayer.graphics).then(() => {
+                            console.log("Map zoomed to the extent of the polygons.");
+                        }).catch(err => {
+                             console.error("Error zooming to extent:", err);
                         });
 
-                        // Now that all graphics are loaded, use goTo to zoom to their extent
-                        mView.goTo(geojsonPolygonsLayer.graphics);
                     })
                     .catch(error => {
                         console.error('Error loading GeoJSON:', error);
                         document.getElementById('loading-indicator').innerHTML = 'Error loading GeoJSON data';
                     });
 
-                // Set up layer toggle
                 document.getElementById('geojson-polygons-toggle').addEventListener('change', function (e) {
                     geojsonPolygonsLayer.visible = e.target.checked;
                 });
