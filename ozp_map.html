@@ -50,7 +50,7 @@
             display: inline-flex;
             background-size: 28px;
         }
-        
+
         /* Layer list panel */
         .layer-list-panel {
             position: absolute;
@@ -65,24 +65,24 @@
             overflow-y: auto;
             z-index: 50;
         }
-        
+
         .layer-item {
             margin: 5px 0;
         }
-        
+
         .legend-item {
             display: flex;
             align-items: center;
             margin: 5px 0;
         }
-        
+
         .legend-color {
             width: 20px;
             height: 20px;
             margin-right: 8px;
             border: 1px solid #ccc;
         }
-        
+
         /* Loading indicator */
         .loading-indicator {
             position: absolute;
@@ -101,20 +101,18 @@
 <body>
     <script src="https://js.arcgis.com/4.29/"></script>
     <div id="map-area"></div>
-    
-    <!-- Loading indicator -->
+
     <div class="loading-indicator" id="loading-indicator">
         Loading GeoJSON data...
     </div>
-    
-    <!-- Layer list panel -->
+
     <div class="layer-list-panel">
         <h3 style="margin-top: 0;">Layers</h3>
         <div class="layer-item">
             <input type="checkbox" id="geojson-polygons-toggle" checked>
             <label for="geojson-polygons-toggle">GeoJSON Polygons</label>
         </div>
-        
+
         <h4>Zone Legend</h4>
         <div class="legend-item">
             <div class="legend-color" style="background-color: rgba(255, 0, 0, 0.5);"></div>
@@ -149,7 +147,7 @@
             <div>Other Zones</div>
         </div>
     </div>
-    
+
     <script>
         require([
             "esri/Map", "esri/Basemap", "esri/layers/VectorTileLayer",
@@ -157,8 +155,8 @@
             "esri/geometry/Point", "esri/Graphic", "esri/layers/GraphicsLayer",
             "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol",
             "esri/Color"
-        ], function (Map, Basemap, VectorTileLayer, MapView, SpatialReference, Point, Graphic, GraphicsLayer, 
-                    SimpleFillSymbol, SimpleLineSymbol, Color) {
+        ], function (Map, Basemap, VectorTileLayer, MapView, SpatialReference, Point, Graphic, GraphicsLayer,
+            SimpleFillSymbol, SimpleLineSymbol, Color) {
             const basemapVTURL = "https://mapapi.geodata.gov.hk/gs/api/v1.0.0/vt/basemap/HK80";
             const mapLabelVTUrl = "https://mapapi.geodata.gov.hk/gs/api/v1.0.0/vt/label/hk/en/HK80";
 
@@ -173,7 +171,7 @@
 
             // Create graphics layer for GeoJSON polygons
             const geojsonPolygonsLayer = new GraphicsLayer();
-            
+
             const map = new Map({
                 basemap: basemap,
                 layers: [geojsonPolygonsLayer] // Add the graphics layer to the map
@@ -186,132 +184,108 @@
                 center: new Point(114.170515, 22.304, new SpatialReference({ wkid: 4326 })),
             });
 
-            // Function to force graphics layer refresh
-            function refreshGraphicsLayer() {
-                // Temporarily toggle visibility to force a redraw
-                const wasVisible = geojsonPolygonsLayer.visible;
-                geojsonPolygonsLayer.visible = false;
-                
-                setTimeout(() => {
-                    geojsonPolygonsLayer.visible = wasVisible;
-                    console.log("Forced graphics layer refresh");
-                }, 100);
-            }
-
-            // Load and display GeoJSON polygons from the provided URL
-            const geojsonUrl = 'https://raw.githubusercontent.com/KU1311/HK_OZP_Tool/main/S_K1_29_merged.geojson';
-            
-            fetch(geojsonUrl)
-                .then(response => response.json())
-                .then(geojsonData => {
-                    // Hide loading indicator
-                    document.getElementById('loading-indicator').style.display = 'none';
-                    
-                    // Process each feature in the GeoJSON
-                    geojsonData.features.forEach(feature => {
-                        // Create polygon from coordinates
-                        const polygon = {
-                            type: "polygon",
-                            rings: feature.geometry.coordinates[0].map(coord => [coord[0], coord[1]]),
-                            spatialReference: { wkid: 4326 }
-                        };
-                        
-                        // Determine color based on zone type
-                        let fillColor;
-                        switch(feature.properties.ZONE_LABEL) {
-                            case "C":
-                                fillColor = new Color([255, 0, 0, 0.5]); // Red
-                                break;
-                            case "G/IC":
-                                fillColor = new Color([0, 255, 0, 0.5]); // Green
-                                break;
-                            case "MRDJ":
-                                fillColor = new Color([128, 0, 128, 0.5]); // Purple
-                                break;
-                            case "O":
-                                fillColor = new Color([255, 165, 0, 0.5]); // Orange
-                                break;
-                            case "OU":
-                                fillColor = new Color([255, 215, 0, 0.5]); // Gold
-                                break;
-                            case "R(A)":
-                                fillColor = new Color([0, 0, 255, 0.5]); // Blue
-                                break;
-                            case "R(B)":
-                                fillColor = new Color([0, 191, 255, 0.5]); // Deep Sky Blue
-                                break;
-                            default:
-                                fillColor = new Color([128, 128, 128, 0.5]); // Gray
-                        }
-                        
-                        // Create symbol for the polygon
-                        const symbol = new SimpleFillSymbol({
-                            color: fillColor,
-                            outline: new SimpleLineSymbol({
-                                color: new Color([0, 0, 0, 0.7]),
-                                width: 1
-                            })
-                        });
-                        
-                        // Create attributes without functions to avoid serialization issues
-                        const attributes = {
-                            ZONE_LABEL: feature.properties.ZONE_LABEL,
-                            DESC_ENG: feature.properties.DESC_ENG,
-                            PLAN_NO: feature.properties.PLAN_NO,
-                            SPUSE_ENG: feature.properties.SPUSE_ENG,
-                            Shape_Area: feature.properties.Shape_Area,
-                            BHC_TYPE: feature.properties.BHC_TYPE,
-                            BHC_VALUE: feature.properties.BHC_VALUE
-                        };
-                        
-                        // Create graphic for the polygon
-                        const graphic = new Graphic({
-                            geometry: polygon,
-                            symbol: symbol,
-                            attributes: attributes,
-                            popupTemplate: {
-                                title: "{ZONE_LABEL} - {DESC_ENG}",
-                                content: `
-                                    <b>Plan No:</b> {PLAN_NO}<br>
-                                    <b>Zone Label:</b> {ZONE_LABEL}<br>
-                                    <b>Description:</b> {DESC_ENG}<br>
-                                    <b>Special Use:</b> {SPUSE_ENG}<br>
-                                    <b>Area:</b> {Shape_Area} sq units<br>
-                                    <b>BHC Type:</b> {BHC_TYPE}<br>
-                                    <b>BHC Value:</b> {BHC_VALUE}
-                                `
-                            }
-                        });
-                        
-                        // Add the graphic to the GeoJSON polygons layer
-                        geojsonPolygonsLayer.add(graphic);
-                    });
-                    
-                    // Set up layer toggle
-                    document.getElementById('geojson-polygons-toggle').addEventListener('change', function(e) {
-                        geojsonPolygonsLayer.visible = e.target.checked;
-                        // Refresh after toggle to ensure proper rendering
-                        setTimeout(refreshGraphicsLayer, 50);
-                    });
-                    
-                    // Force refresh after loading all graphics
-                    setTimeout(refreshGraphicsLayer, 500);
-                })
-                .catch(error => {
-                    console.error('Error loading GeoJSON:', error);
-                    document.getElementById('loading-indicator').innerHTML = 'Error loading GeoJSON data';
-                });
-
-            // Add label layer after map view is created
+            // Load GeoJSON polygons and add them to the map AFTER the view is ready
             mView.when(() => {
                 map.add(new VectorTileLayer(mapLabelVTUrl));
-                
-                // Force refresh when view is ready
-                setTimeout(refreshGraphicsLayer, 1000);
+
+                const geojsonUrl = 'https://raw.githubusercontent.com/KU1311/HK_OZP_Tool/main/S_K1_29_merged.geojson';
+
+                fetch(geojsonUrl)
+                    .then(response => response.json())
+                    .then(geojsonData => {
+                        // Hide loading indicator
+                        document.getElementById('loading-indicator').style.display = 'none';
+
+                        // Process each feature in the GeoJSON
+                        geojsonData.features.forEach(feature => {
+                            // Create polygon from coordinates
+                            const polygon = {
+                                type: "polygon",
+                                rings: feature.geometry.coordinates[0].map(coord => [coord[0], coord[1]]),
+                                spatialReference: { wkid: 4326 }
+                            };
+
+                            // Determine color based on zone type
+                            let fillColor;
+                            switch (feature.properties.ZONE_LABEL) {
+                                case "C":
+                                    fillColor = new Color([255, 0, 0, 0.5]); // Red
+                                    break;
+                                case "G/IC":
+                                    fillColor = new Color([0, 255, 0, 0.5]); // Green
+                                    break;
+                                case "MRDJ":
+                                    fillColor = new Color([128, 0, 128, 0.5]); // Purple
+                                    break;
+                                case "O":
+                                    fillColor = new Color([255, 165, 0, 0.5]); // Orange
+                                    break;
+                                case "OU":
+                                    fillColor = new Color([255, 215, 0, 0.5]); // Gold
+                                    break;
+                                case "R(A)":
+                                    fillColor = new Color([0, 0, 255, 0.5]); // Blue
+                                    break;
+                                case "R(B)":
+                                    fillColor = new Color([0, 191, 255, 0.5]); // Deep Sky Blue
+                                    break;
+                                default:
+                                    fillColor = new Color([128, 128, 128, 0.5]); // Gray
+                            }
+
+                            // Create symbol for the polygon
+                            const symbol = new SimpleFillSymbol({
+                                color: fillColor,
+                                outline: new SimpleLineSymbol({
+                                    color: new Color([0, 0, 0, 0.7]),
+                                    width: 1
+                                })
+                            });
+
+                            // Create attributes without functions to avoid serialization issues
+                            const attributes = {
+                                ZONE_LABEL: feature.properties.ZONE_LABEL,
+                                DESC_ENG: feature.properties.DESC_ENG,
+                                PLAN_NO: feature.properties.PLAN_NO,
+                                SPUSE_ENG: feature.properties.SPUSE_ENG,
+                                Shape_Area: feature.properties.Shape_Area,
+                                BHC_TYPE: feature.properties.BHC_TYPE,
+                                BHC_VALUE: feature.properties.BHC_VALUE
+                            };
+
+                            // Create graphic for the polygon
+                            const graphic = new Graphic({
+                                geometry: polygon,
+                                symbol: symbol,
+                                attributes: attributes,
+                                popupTemplate: {
+                                    title: "{ZONE_LABEL} - {DESC_ENG}",
+                                    content: `
+                                        <b>Plan No:</b> {PLAN_NO}<br>
+                                        <b>Zone Label:</b> {ZONE_LABEL}<br>
+                                        <b>Description:</b> {DESC_ENG}<br>
+                                        <b>Special Use:</b> {SPUSE_ENG}<br>
+                                        <b>Area:</b> {Shape_Area} sq units<br>
+                                        <b>BHC Type:</b> {BHC_TYPE}<br>
+                                        <b>BHC Value:</b> {BHC_VALUE}
+                                    `
+                                }
+                            });
+
+                            // Add the graphic to the GeoJSON polygons layer
+                            geojsonPolygonsLayer.add(graphic);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading GeoJSON:', error);
+                        document.getElementById('loading-indicator').innerHTML = 'Error loading GeoJSON data';
+                    });
+
+                // Set up layer toggle
+                document.getElementById('geojson-polygons-toggle').addEventListener('change', function (e) {
+                    geojsonPolygonsLayer.visible = e.target.checked;
+                });
             });
-            
-            // Additional refresh after a longer delay to catch any late rendering issues
-            setTimeout(refreshGraphicsLayer, 2000);
         });
     </script>
 </body>
