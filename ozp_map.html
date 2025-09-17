@@ -75,6 +75,8 @@
             border-radius: 4px;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
             max-width: 250px;
+            max-height: 70%;
+            overflow-y: auto;
         }
         
         .layer-item {
@@ -132,12 +134,36 @@
         
         <h4>Zone Legend</h4>
         <div class="legend-item">
-            <div class="legend-color" style="background-color: rgba(0, 255, 0, 0.3);"></div>
+            <div class="legend-color" style="background-color: rgba(255, 0, 0, 0.5);"></div>
+            <div>C - Commercial</div>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: rgba(0, 255, 0, 0.5);"></div>
+            <div>G/IC - Government/Institution</div>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: rgba(128, 0, 128, 0.5);"></div>
+            <div>MRDJ - Marine Related Development Jurisdiction</div>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: rgba(255, 165, 0, 0.5);"></div>
+            <div>O - Open Space</div>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: rgba(255, 215, 0, 0.5);"></div>
+            <div>OU - Other Specified Uses</div>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: rgba(0, 0, 255, 0.5);"></div>
             <div>R(A) - Residential (Group A)</div>
         </div>
         <div class="legend-item">
-            <div class="legend-color" style="background-color: rgba(255, 165, 0, 0.3);"></div>
-            <div>OU - Other Specified Uses</div>
+            <div class="legend-color" style="background-color: rgba(0, 191, 255, 0.5);"></div>
+            <div>R(B) - Residential (Group B)</div>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: rgba(128, 128, 128, 0.5);"></div>
+            <div>Other Zones</div>
         </div>
     </div>
     
@@ -329,12 +355,30 @@
                         
                         // Determine color based on zone type
                         let fillColor;
-                        if (feature.properties.ZONE_LABEL === "R(A)") {
-                            fillColor = new Color([0, 255, 0, 0.3]); // Green with transparency
-                        } else if (feature.properties.ZONE_LABEL === "OU") {
-                            fillColor = new Color([255, 165, 0, 0.3]); // Orange with transparency
-                        } else {
-                            fillColor = new Color([200, 200, 200, 0.3]); // Default gray
+                        switch(feature.properties.ZONE_LABEL) {
+                            case "C":
+                                fillColor = new Color([255, 0, 0, 0.5]); // Red
+                                break;
+                            case "G/IC":
+                                fillColor = new Color([0, 255, 0, 0.5]); // Green
+                                break;
+                            case "MRDJ":
+                                fillColor = new Color([128, 0, 128, 0.5]); // Purple
+                                break;
+                            case "O":
+                                fillColor = new Color([255, 165, 0, 0.5]); // Orange
+                                break;
+                            case "OU":
+                                fillColor = new Color([255, 215, 0, 0.5]); // Gold
+                                break;
+                            case "R(A)":
+                                fillColor = new Color([0, 0, 255, 0.5]); // Blue
+                                break;
+                            case "R(B)":
+                                fillColor = new Color([0, 191, 255, 0.5]); // Deep Sky Blue
+                                break;
+                            default:
+                                fillColor = new Color([128, 128, 128, 0.5]); // Gray
                         }
                         
                         // Create symbol for the polygon
@@ -346,11 +390,22 @@
                             })
                         });
                         
+                        // Create attributes without functions to avoid serialization issues
+                        const attributes = {
+                            ZONE_LABEL: feature.properties.ZONE_LABEL,
+                            DESC_ENG: feature.properties.DESC_ENG,
+                            PLAN_NO: feature.properties.PLAN_NO,
+                            SPUSE_ENG: feature.properties.SPUSE_ENG,
+                            Shape_Area: feature.properties.Shape_Area,
+                            BHC_TYPE: feature.properties.BHC_TYPE,
+                            BHC_VALUE: feature.properties.BHC_VALUE
+                        };
+                        
                         // Create graphic for the polygon
                         const graphic = new Graphic({
                             geometry: polygon,
                             symbol: symbol,
-                            attributes: feature.properties,
+                            attributes: attributes,
                             popupTemplate: {
                                 title: "{ZONE_LABEL} - {DESC_ENG}",
                                 content: `
@@ -358,7 +413,7 @@
                                     <b>Zone Label:</b> {ZONE_LABEL}<br>
                                     <b>Description:</b> {DESC_ENG}<br>
                                     <b>Special Use:</b> {SPUSE_ENG}<br>
-                                    <b>Area:</b> {Shape_Area.toFixed(2)} sq units<br>
+                                    <b>Area:</b> {Shape_Area} sq units<br>
                                     <b>BHC Type:</b> {BHC_TYPE}<br>
                                     <b>BHC Value:</b> {BHC_VALUE}
                                 `
