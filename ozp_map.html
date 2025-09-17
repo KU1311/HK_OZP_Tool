@@ -308,6 +308,21 @@
                     document.getElementById('loading-indicator').innerHTML = 'Error loading GeoJSON data';
                 });
 
+            <script>
+                // Alternative approach: Force graphics layer refresh
+                function refreshGraphicsLayer() {
+                    // Temporarily toggle visibility to force a redraw
+                    geojsonPolygonsLayer.visible = false;
+                    setTimeout(() => {
+                        geojsonPolygonsLayer.visible = true;
+                        console.log("Forced graphics layer refresh");
+                    }, 100);
+                }
+                
+                // Call this function after adding all graphics
+                setTimeout(refreshGraphicsLayer, 1000);
+                </script>
+            
             // Add label layer after map view is created
             mView.when(() => {
                 map.add(new VectorTileLayer(mapLabelVTUrl));
