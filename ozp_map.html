@@ -155,12 +155,12 @@
             "esri/views/MapView", "esri/geometry/SpatialReference",
             "esri/geometry/Point", "esri/Graphic", "esri/layers/GraphicsLayer",
             "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol",
-            "esri/Color"
+            "esri/Color", "esri/geometry/projection"
         ], function (Map, Basemap, VectorTileLayer, MapView, SpatialReference, Point, Graphic, GraphicsLayer,
-            SimpleFillSymbol, SimpleLineSymbol, Color) {
+            SimpleFillSymbol, SimpleLineSymbol, Color, projection) {
 
-            const basemapVTURL = "https://mapapi.geodata.gov.hk/gs/api/v1.0.0/vt/basemap/HK80";
-            const mapLabelVTUrl = "https://mapapi.geodata.gov.hk/gs/api/v1.0.0/vt/label/hk/en/HK80";
+            const basemapVTURL = "https://mapapi.geodata.gov.hk/gs/api/v1.0.0/vt/basemap/WGS84";
+            const mapLabelVTUrl = "https://mapapi.geodata.gov.hk/gs/api/v1.0.0/vt/label/hk/en/WGS84";
 
             const basemap = new Basemap({
                 baseLayers: [
@@ -192,6 +192,13 @@
                 // Add label layer
                 map.add(new VectorTileLayer(mapLabelVTUrl));
 
+                // Explicitly load projection module (in case needed, though we're aligning to WGS84)
+                projection.load().then(() => {
+                    console.log("Projection loaded.");
+                }).catch(err => {
+                    console.error("Error loading projection:", err);
+                });
+
                 const geojsonUrl = 'https://raw.githubusercontent.com/KU1311/HK_OZP_Tool/main/S_K1_29_merged.geojson';
 
                 fetch(geojsonUrl)
@@ -210,13 +217,13 @@
                             return;
                         }
 
-                        const graphics = geojsonData.features.map(feature => {
-                            const polygon = {
-                                type: "polygon",
-                                rings: feature.geometry.coordinates[0].map(coord => [coord[0], coord[1]]),
-                                spatialReference: { wkid: 4326 }
-                            };
-                            
+                        let graphics = [];
+
+                        geojsonData.features.forEach(feature => {
+                            if (!feature.geometry) return;
+
+                            const type = feature.geometry.type;
+
                             let fillColor;
                             switch (feature.properties.ZONE_LABEL) {
                                 case "C":
@@ -262,22 +269,43 @@
                                 BHC_VALUE: feature.properties.BHC_VALUE
                             };
 
-                            return new Graphic({
-                                geometry: polygon,
-                                symbol: symbol,
-                                attributes: attributes,
-                                popupTemplate: {
-                                    title: "{ZONE_LABEL} - {DESC_ENG}",
-                                    content: `
-                                        <b>Plan No:</b> {PLAN_NO}<br>
-                                        <b>Zone Label:</b> {ZONE_LABEL}<br>
-                                        <b>Description:</b> {DESC_ENG}<br>
-                                        <b>Special Use:</b> {SPUSE_ENG}<br>
-                                        <b>Area:</b> {Shape_Area} sq units<br>
-                                        <b>BHC Type:</b> {BHC_TYPE}<br>
-                                        <b>BHC Value:</b> {BHC_VALUE}
-                                    `
-                                }
+                            const popupTemplate = {
+                                title: "{ZONE_LABEL} - {DESC_ENG}",
+                                content: `
+                                    <b>Plan No:</b> {PLAN_NO}<br>
+                                    <b>Zone Label:</b> {ZONE_LABEL}<br>
+                                    <b>Description:</b> {DESC_ENG}<br>
+                                    <b>Special Use:</b> {SPUSE_ENG}<br>
+                                    <b>Area:</b> {Shape_Area} sq units<br>
+                                    <b>BHC Type:</b> {BHC_TYPE}<br>
+                                    <b>BHC Value:</b> {BHC_VALUE}
+                                `
+                            };
+
+                            let polygonGeometries = [];
+                            if (type === "Polygon") {
+                                polygonGeometries = [feature.geometry.coordinates];
+                            } else if (type === "MultiPolygon") {
+                                polygonGeometries = feature.geometry.coordinates;
+                            } else {
+                                return;
+                            }
+
+                            polygonGeometries.forEach(rings => {
+                                const polygon = {
+                                    type: "polygon",
+                                    rings: rings,
+                                    spatialReference: { wkid: 4326 }
+                                };
+
+                                const graphic = new Graphic({
+                                    geometry: polygon,
+                                    symbol: symbol,
+                                    attributes: attributes,
+                                    popupTemplate: popupTemplate
+                                });
+
+                                graphics.push(graphic);
                             });
                         });
                         
@@ -285,12 +313,18 @@
                         geojsonPolygonsLayer.addMany(validGraphics);
                         console.log(`${validGraphics.length} graphics added to the layer.`);
 
+                        // Force a redraw by toggling visibility
+                        geojsonPolygonsLayer.visible = false;
+                        setTimeout(() => {
+                            geojsonPolygonsLayer.visible = true;
+                        }, 10);
+
                         // Force a redraw by going to the extent
                         if (validGraphics.length > 0) {
                             mView.goTo(validGraphics).then(() => {
                                 console.log("Map zoomed to the extent of the polygons. They should now be visible.");
                             }).catch(err => {
-                                 console.error("Error zooming to extent:", err);
+                                console.error("Error zooming to extent:", err);
                             });
                         }
                     })
